@@ -11,7 +11,7 @@ class Config:
   
     ## train
     lr = 1e-3 
-    end_epoch = 5
+    end_epoch = 5 * 15
     max_sh_degree = 3
     increase_sh_degree_interval = 1000
     densify_end_itr = 15000
@@ -37,7 +37,7 @@ class Config:
     lpips_weight = 0.2
 
     ## dataset
-    dataset = 'NeuMan' # Custom, NeuMan
+    dataset = 'Custom' # Custom, NeuMan
 
     ## others
     num_thread = 8

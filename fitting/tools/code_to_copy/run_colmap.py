@@ -4,6 +4,9 @@ import cv2
 from glob import glob
 import argparse
 
+import os
+os.environ["QT_QPA_PLATFORM"] = "offscreen"
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--root_path', type=str, dest='root_path')

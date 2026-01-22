@@ -131,8 +131,8 @@ class Custom(torch.utils.data.Dataset):
         else:
             assert 0, 'Background point cloud is not available'
 
-        if self.data_split == 'train':
-            frame_idx_list *= 15
+        # if self.data_split == 'train':
+        #     frame_idx_list *= 15
         return cam_params, img_paths, mask_paths, kpts, smplx_params, scene, frame_idx_list
     
     def load_id_info(self):
