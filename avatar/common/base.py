@@ -150,6 +150,14 @@ class Trainer(Base):
         self.logger.info("Write snapshot into {}".format(file_path))
 
     def load_model(self):
+        # 定义损坏文件的大小阈值（50KB）
+        corruption_threshold_bytes = 50 * 1024
+        model_file_list = glob.glob(osp.join(cfg.model_dir,'*.pth'))
+        for file_path in model_file_list:
+            file_size = os.path.getsize(file_path)
+            if file_size < corruption_threshold_bytes:
+                self.logger.warning(f"Deleting corrupted model file: {file_path} (Size: {file_size / 1024:.2f}KB)")
+                os.remove(file_path)
         model_file_list = glob.glob(osp.join(cfg.model_dir,'*.pth'))
         cur_epoch = max([int(file_name[file_name.find('snapshot_') + 9 : file_name.find('.pth')]) for file_name in model_file_list])
         model_path = osp.join(cfg.model_dir, 'snapshot_' + str(cur_epoch) + '.pth')
