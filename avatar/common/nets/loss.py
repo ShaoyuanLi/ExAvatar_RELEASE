@@ -176,6 +176,11 @@ class ArmRGBReg(nn.Module):
  
     def forward(self, mesh_neutral_pose, is_upper_arm, is_lower_arm, rgb):
         batch_size = rgb.shape[0]
+        # --- 开始修改 ---
+        # 增加健壮性检查：如果上臂或下臂的掩码为空，则没有可计算的顶点，直接返回0损失
+        if not torch.any(is_upper_arm) or not torch.any(is_lower_arm):
+            return torch.tensor(0.0, device=rgb.device, dtype=torch.float32)
+        # --- 修改结束 ---
         
         # measure x-axis distance
         mesh_upper_arm = mesh_neutral_pose[is_upper_arm,:]
@@ -185,7 +190,17 @@ class ArmRGBReg(nn.Module):
         #
         dist_x_thr = 0.01 
         dist_x_mask = (dist_x < dist_x_thr).float()
-        valid_num = int(torch.min(dist_x_mask.sum(1)))
+        # --- 开始修改 ---
+        # 增加健壮性检查：如果没有任何顶点对满足距离阈值，也返回0损失
+        sum_per_lower_arm_vertex = dist_x_mask.sum(1)
+        if sum_per_lower_arm_vertex.numel() == 0:
+            return torch.tensor(0.0, device=rgb.device, dtype=torch.float32)
+        valid_num = int(torch.min(sum_per_lower_arm_vertex))
+        # 如果 valid_num 为 0，意味着没有有效的邻近点，无法计算损失
+        if valid_num == 0:
+            return torch.tensor(0.0, device=rgb.device, dtype=torch.float32)
+        # --- 修改结束 ---
+
         dist = torch.sqrt(torch.sum((mesh_lower_arm[:,None,:] - mesh_upper_arm[None,:,:]) ** 2, 2))
         dist = dist * dist_x_mask + 9999 * (1 - dist_x_mask)
 

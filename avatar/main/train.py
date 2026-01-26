@@ -27,6 +27,13 @@ def main():
         trainer.read_timer.tic()
 
         for itr, data in enumerate(trainer.batch_generator):
+            # 如果是续训的第一个epoch，则跳过已经训练过的batch
+            if epoch == trainer.start_epoch and itr < trainer.start_itr:
+                continue
+            # 在第一个有效batch之后，重置start_itr，确保后续epoch从0开始
+            if itr == trainer.start_itr:
+                trainer.start_itr = 0
+        
             trainer.read_timer.toc()
             trainer.gpu_timer.tic()
             
@@ -73,14 +80,25 @@ def main():
             trainer.tot_timer.toc()
             trainer.tot_timer.tic()
             trainer.read_timer.tic()
+            # --- 新增：在每个 batch 后保存模型 ---
+            # 您可以根据需要调整保存频率，例如每 N 个 batch 保存一次
+            if (itr + 1) % cfg.save_interval == 0: # 假设 cfg.save_interval 是保存间隔
+                 trainer.save_model({
+                    'epoch': epoch,
+                    'itr': itr + 1, # 保存下一个应该开始的 batch 索引
+                    'network': trainer.model.module.state_dict(),
+                    'optimizer': trainer.optimizer.state_dict(),
+                }, epoch, itr + 1)
             cur_itr += 1
+            
 
         # save model
         trainer.save_model({
-            'epoch': epoch,
+            'epoch': epoch + 1,
+            'itr': 0,
             'network': trainer.model.module.state_dict(),
             'optimizer': trainer.optimizer.state_dict(),
-        }, epoch)
+        }, epoch + 1, 0)
    
 if __name__ == "__main__":
     main()

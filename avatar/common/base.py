@@ -13,6 +13,7 @@ from timer import Timer
 from logger import colorlogger
 from torch.nn.parallel.data_parallel import DataParallel
 from model import get_model
+import re
 
 # dynamic dataset import
 exec('from ' + cfg.dataset + ' import ' + cfg.dataset)
@@ -131,21 +132,26 @@ class Trainer(Base):
         scheduler = self.get_scheduler()
 
         if cfg.continue_train:
-            start_epoch = ckpt['epoch'] + 1
+            start_epoch = ckpt.get('epoch', 0)
+            start_itr = ckpt.get('itr', 0)
             #optimizer.load_state_dict(ckpt['optimizer'], strict=False)
         else:
             start_epoch = 0
+            start_itr = 0
         model.train()
         for module in model.module.eval_modules:
             module.eval()
 
         self.start_epoch = start_epoch
+        self.start_itr = start_itr
+        self.logger.info(f"Continue training from Epoch {self.start_epoch}, Itr {self.start_itr}")
+
         self.model = model
         self.optimizer = optimizer
         self.scheduler = scheduler
 
-    def save_model(self, state, epoch):
-        file_path = osp.join(cfg.model_dir,'snapshot_{}.pth'.format(str(epoch)))
+    def save_model(self, state, epoch, itr):
+        file_path = osp.join(cfg.model_dir, f'snapshot_{epoch}_{itr}.pth')
         torch.save(state, file_path)
         self.logger.info("Write snapshot into {}".format(file_path))
 
@@ -159,8 +165,20 @@ class Trainer(Base):
                 self.logger.warning(f"Deleting corrupted model file: {file_path} (Size: {file_size / 1024:.2f}KB)")
                 os.remove(file_path)
         model_file_list = glob.glob(osp.join(cfg.model_dir,'*.pth'))
-        cur_epoch = max([int(file_name[file_name.find('snapshot_') + 9 : file_name.find('.pth')]) for file_name in model_file_list])
-        model_path = osp.join(cfg.model_dir, 'snapshot_' + str(cur_epoch) + '.pth')
+
+        # 通过解析文件名中的 epoch 和 itr 来找到最新的文件
+        def get_epoch_itr_from_name(filename):
+            # 匹配 snapshot_{epoch}_{itr}.pth
+            match = re.search(r'snapshot_(\d+)_(\d+)\.pth', os.path.basename(filename))
+            if match:
+                return int(match.group(1)), int(match.group(2))
+            # 兼容旧格式 snapshot_{epoch}.pth
+            match = re.search(r'snapshot_(\d+)\.pth', os.path.basename(filename))
+            if match:
+                return int(match.group(1)), 0 # 旧格式视为第0个itr
+            return -1, -1 # 无法解析的文件名
+    
+        model_path = max(model_file_list , key=get_epoch_itr_from_name)
         self.logger.info('Load checkpoint from {}'.format(model_path))
         ckpt = torch.load(model_path, map_location='cpu')
         return ckpt
