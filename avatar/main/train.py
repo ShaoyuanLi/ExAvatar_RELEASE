@@ -53,7 +53,7 @@ def main():
             # backward
             sum(loss[k] for k in loss).backward()
             # 梯度裁剪，防止梯度爆炸
-            torch.nn.utils.clip_grad_norm_(trainer.model.parameters(), max_norm=20.0)
+            torch.nn.utils.clip_grad_norm_(trainer.model.parameters(), max_norm=1.0)
             # densify and prune scene Gaussians
             if (not cfg.fit_pose_to_test) and (cur_itr < cfg.densify_end_itr):
                 with torch.no_grad():

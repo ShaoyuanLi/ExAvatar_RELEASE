@@ -138,6 +138,7 @@ class Trainer(Base):
         else:
             start_epoch = 0
             start_itr = 0
+
         model.train()
         for module in model.module.eval_modules:
             module.eval()
@@ -154,6 +155,10 @@ class Trainer(Base):
         file_path = osp.join(cfg.model_dir, f'snapshot_{epoch}_{itr}.pth')
         torch.save(state, file_path)
         self.logger.info("Write snapshot into {}".format(file_path))
+        if itr == 0:
+            file_path = osp.join(cfg.model_dir, f'snapshot_{epoch}.pth')
+            torch.save(state, file_path)
+            self.logger.info("Write snapshot into {}".format(file_path))
 
     def load_model(self):
         # 定义损坏文件的大小阈值（50KB）

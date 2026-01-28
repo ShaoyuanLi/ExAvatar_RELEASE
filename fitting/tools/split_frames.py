@@ -7,19 +7,19 @@ import re
 
 # 包含所有图片帧的目录路径
 # 注意：脚本会自动在这个路径下寻找名为 "frames" 的子目录
-IMAGE_DIRECTORY = "/home/lishaoyuan/ExAvatar_RELEASE/fitting/data/Custom/data/Jiali/"
+IMAGE_DIRECTORY = "/home/lishaoyuan/ExAvatar_RELEASE/fitting/data/Custom/data/Jiali1/"
 
 # 图片文件的扩展名 (例如: '.jpg', '.png', '.jpeg')
 IMAGE_EXTENSION = ".png"
 
 # 原始视频的帧率 (例如 30 fps)
-ORIGINAL_FPS = 10
+ORIGINAL_FPS = 3
 
 # 训练集的目标采样帧率 (例如 5 fps)
 TARGET_FPS = 3
 
 # 测试集的大小
-TEST_SET_SIZE = 10
+TEST_SET_SIZE = 8
 
 # --- 2. 脚本主要逻辑 (已按要求修改) ---
 

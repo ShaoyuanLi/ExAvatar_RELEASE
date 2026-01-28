@@ -176,31 +176,23 @@ class ArmRGBReg(nn.Module):
  
     def forward(self, mesh_neutral_pose, is_upper_arm, is_lower_arm, rgb):
         batch_size = rgb.shape[0]
-        # --- 开始修改 ---
-        # 增加健壮性检查：如果上臂或下臂的掩码为空，则没有可计算的顶点，直接返回0损失
+        # --- 新增的保护逻辑 ---
+        device = rgb.device
+        # 检查 is_upper_arm 和 is_lower_arm 掩码是否至少包含一个 True 值。
+        # torch.any() 会在张量中存在任何一个非零（True）元素时返回 True，效率很高。
+        # 如果上臂或下臂的顶点集合为空，则无法计算损失，直接返回 0。
         if not torch.any(is_upper_arm) or not torch.any(is_lower_arm):
-            return torch.tensor(0.0, device=rgb.device, dtype=torch.float32)
-        # --- 修改结束 ---
-        
+            # 返回一个与输入设备和数据类型一致的零张量
+            return torch.tensor(0.0, device=device, dtype=torch.float32)
+        # --- 保护逻辑结束 ---
         # measure x-axis distance
         mesh_upper_arm = mesh_neutral_pose[is_upper_arm,:]
         mesh_lower_arm = mesh_neutral_pose[is_lower_arm,:]
         dist_x = torch.abs(mesh_lower_arm[:,None,0] - mesh_upper_arm[None,:,0])
-        
         #
         dist_x_thr = 0.01 
         dist_x_mask = (dist_x < dist_x_thr).float()
-        # --- 开始修改 ---
-        # 增加健壮性检查：如果没有任何顶点对满足距离阈值，也返回0损失
-        sum_per_lower_arm_vertex = dist_x_mask.sum(1)
-        if sum_per_lower_arm_vertex.numel() == 0:
-            return torch.tensor(0.0, device=rgb.device, dtype=torch.float32)
-        valid_num = int(torch.min(sum_per_lower_arm_vertex))
-        # 如果 valid_num 为 0，意味着没有有效的邻近点，无法计算损失
-        if valid_num == 0:
-            return torch.tensor(0.0, device=rgb.device, dtype=torch.float32)
-        # --- 修改结束 ---
-
+        valid_num = int(torch.min(dist_x_mask.sum(1)))
         dist = torch.sqrt(torch.sum((mesh_lower_arm[:,None,:] - mesh_upper_arm[None,:,:]) ** 2, 2))
         dist = dist * dist_x_mask + 9999 * (1 - dist_x_mask)
 
@@ -211,3 +203,12 @@ class ArmRGBReg(nn.Module):
         loss = (rgb[:,is_lower_arm,:] - rgb[:,upper_arm_idx,:].view(batch_size,int(is_lower_arm.sum()),top_k,3).mean(2).detach()) ** 2
         return loss
        
+class SceneHumanDepthLoss(nn.Module):
+    def __init__(self):
+        super(SceneHumanDepthLoss, self).__init__()
+    
+    def forward(self, depthmap_scene, depthmap_human):
+        is_fg = depthmap_human > 0
+        diff = (depthmap_scene - depthmap_human.detach()) * is_fg # this should be positive as human should be the foreground. only regularizer scene depth map
+        loss = torch.clamp(-diff, min=0) # penalize negative diff
+        return loss

@@ -119,7 +119,7 @@ def main():
                 
                 # backward
                 sum(loss[k] for k in loss).backward()
-                torch.nn.utils.clip_grad_norm_(trainer.model.parameters(), max_norm=20.0)
+                torch.nn.utils.clip_grad_norm_(trainer.model.parameters(), max_norm=1.0)
                 trainer.optimizer.step()
                 print(cfg.result_dir)
 
