@@ -8,6 +8,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--root_path', type=str, dest='root_path')
     parser.add_argument('--use_colmap', dest='use_colmap', action='store_true')
+    parser.add_argument('--transfer_colmap', dest='transfer_colmap', action='store_true')
     args = parser.parse_args()
     assert args.root_path, "Please set root_path."
     return args
@@ -33,7 +34,7 @@ for img_path in img_path_list:
             print('something bad happened when removing unnecessary frames. terminate the script.')
             sys.exit()
 
-# make camera parameters
+# # make camera parameters
 if args.use_colmap:
     os.chdir('./COLMAP')
     cmd = 'python run_colmap.py --root_path ' + root_path
@@ -42,7 +43,12 @@ if args.use_colmap:
     if (result != 0):
         print('something bad happened when running COLMAP to get camera parameters. terminate the script.')
         sys.exit()
-    os.chdir('../../')
+    os.chdir('../')
+    cmd = 'python make_camera_params.py ' + osp.join(root_path, "sparse")
+# make camera parameters
+elif args.transfer_colmap:
+    print('already has camera parameters. continue the script.')
+    cmd = 'python make_camera_params.py ' + root_path
 else:
     cmd = 'python make_virtual_cam_params.py --root_path ' + root_path
     print(cmd)
@@ -51,7 +57,7 @@ else:
         print('something bad happened when making the virtual camera parameters. terminate the script.')
         sys.exit()
 
-# DECA (get initial FLAME parameters)
+# # # DECA (get initial FLAME parameters)
 os.chdir('./DECA')
 cmd = 'python run_deca.py --root_path ' + root_path
 print(cmd)

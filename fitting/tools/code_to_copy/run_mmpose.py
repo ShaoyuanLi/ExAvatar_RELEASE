@@ -18,8 +18,8 @@ def parse_args():
 
 args = parse_args()
 root_path = args.root_path
+output_root = osp.join(root_path, 'vis_results')
 
-output_root = './vis_results'
 os.system('rm -rf ' + output_root)
 
 # run mmpose

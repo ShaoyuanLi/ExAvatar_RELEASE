@@ -7,16 +7,16 @@ import re
 
 # 包含所有图片帧的目录路径
 # 注意：脚本会自动在这个路径下寻找名为 "frames" 的子目录
-IMAGE_DIRECTORY = "/home/lishaoyuan/ExAvatar_RELEASE/fitting/data/Custom/data/Jiali1/"
+IMAGE_DIRECTORY = "/home/lishaoyuan/ExAvatar_RELEASE/fitting/data/Custom/data/JialiStatic2"
 
 # 图片文件的扩展名 (例如: '.jpg', '.png', '.jpeg')
 IMAGE_EXTENSION = ".png"
 
 # 原始视频的帧率 (例如 30 fps)
-ORIGINAL_FPS = 3
+ORIGINAL_FPS = 5
 
 # 训练集的目标采样帧率 (例如 5 fps)
-TARGET_FPS = 3
+TARGET_FPS = 4
 
 # 测试集的大小
 TEST_SET_SIZE = 8
@@ -82,17 +82,28 @@ def generate_frame_lists_split(image_dir, image_ext, original_fps, target_fps, t
     print(f" -> 'frame_list_all.txt' 生成完毕，包含 {len(all_indices)} 个真实序号。")
 
     # --- 步骤 4: 生成 frame_list_train.txt ---
-    if target_fps > 0 and original_fps >= target_fps:
-        step = max(1, original_fps // target_fps)
+    # [修改点] 计算浮点数步长
+    if target_fps > 0:
+        step = original_fps / target_fps
     else:
-        step = 1
+        step = 1.0
+    # 如果目标帧率高于原始帧率，则步长设为1（全采）
+    if step < 1.0:
+        step = 1.0
 
-    print(f"\n📄 正在以 {step} 帧为步长采样生成训练集...")
+    print(f"\n📄 正在以 {step:.4f} 帧为步长(策略:四舍五入)采样生成训练集...")
     train_frames_path = os.path.join(image_dir, "frame_list_train.txt")
-
     train_indices = set()
-    # 注意：这里我们对 image_files 列表进行步长采样
-    sampled_files = image_files[::step]
+    sampled_files = []
+    # [修改点] 使用累加浮点步长 + 四舍五入的方式进行采样
+    current_float_idx = 0.0
+    num_total_files = len(image_files)
+    while current_float_idx < num_total_files:
+        # 四舍五入策略：int(x + 0.5)
+        idx = int(current_float_idx + 0.5)
+        if idx < num_total_files:
+            sampled_files.append(image_files[idx])
+        current_float_idx += step
     
     with open(train_frames_path, 'w') as f_train:
         for f_path in sampled_files:

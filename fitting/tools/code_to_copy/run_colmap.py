@@ -18,7 +18,7 @@ args = parse_args()
 root_path = args.root_path
 
 # path
-colmap_path = './colmap_tmp'
+colmap_path = osp.join(root_path, 'colmap_tmp')
 os.makedirs(colmap_path, exist_ok=True)
 os.system('rm -rf ' + osp.join(colmap_path, '*'))
 os.makedirs(osp.join(colmap_path, 'images'), exist_ok=True)

@@ -191,7 +191,9 @@ class Model(nn.Module):
         if mode == 'train':
             # track stats to densify and prune Gaussians
             stats = {'mean_2d': scene_renders['mean_2d'], 'is_vis': scene_renders['is_vis'].detach(), 'radius': scene_renders['radius'].detach()}
-
+            # [修改] 在训练模式下，也将 human_renders 和 human_renders_refined 的图像存入 stats
+            stats['human_img'] = human_renders['img']
+            stats['human_img_refined'] = human_renders_refined['img']
             # loss functions
             loss = {}
             loss['rgb_human'] = self.rgb_loss(scene_human_renders['img'], data['img'], bbox=data['bbox']) * cfg.rgb_loss_weight

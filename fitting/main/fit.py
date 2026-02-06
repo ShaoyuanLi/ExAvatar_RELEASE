@@ -119,17 +119,17 @@ def main():
                 
                 # backward
                 sum(loss[k] for k in loss).backward()
-                torch.nn.utils.clip_grad_norm_(trainer.model.parameters(), max_norm=1.0)
+                torch.nn.utils.clip_grad_norm_(trainer.model.parameters(), max_norm=10.0)
                 trainer.optimizer.step()
-                print(cfg.result_dir)
 
                 # log
-                screen = [
-                    'epoch %d/%d itr_data %d/%d itr_opt %d/%d:' % (epoch, cfg.end_epoch, itr_data, trainer.itr_per_epoch, itr_opt, cfg.itr_opt_num),
-                    'lr: %g' % (trainer.get_lr()),
-                    ]
-                screen += ['%s: %.4f' % ('loss_' + k, v.detach()) for k,v in loss.items()]
-                print(screen)
+                if itr_opt % 50 == 0:
+                    screen = [
+                        'epoch %d/%d itr_data %d/%d itr_opt %d/%d:' % (epoch, cfg.end_epoch, itr_data, trainer.itr_per_epoch, itr_opt, cfg.itr_opt_num),
+                        'lr: %g' % (trainer.get_lr()),
+                        ]
+                    screen += ['%s: %.4f' % ('loss_' + k, v.detach()) for k,v in loss.items()]
+                    print(screen)
 
             # save
             if epoch != (cfg.end_epoch-1):

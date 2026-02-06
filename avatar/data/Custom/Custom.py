@@ -35,6 +35,8 @@ class Custom(torch.utils.data.Dataset):
             frame_idx = int(line)
             frame_idx_list.append(frame_idx)
 
+        if self.data_split == 'train':
+            frame_idx_list *= 5
         # load camera parameters
         if osp.isfile(osp.join(self.root_path, 'sparse', 'cameras.txt')) and osp.isfile(osp.join(self.root_path, 'sparse', 'images.txt')):
             print('Load camera parameters from COLMAP')

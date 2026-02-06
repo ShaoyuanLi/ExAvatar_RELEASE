@@ -152,11 +152,12 @@ class Trainer(Base):
         self.scheduler = scheduler
 
     def save_model(self, state, epoch, itr):
-        file_path = osp.join(cfg.model_dir, f'snapshot_{epoch}_{itr}.pth')
-        torch.save(state, file_path)
-        self.logger.info("Write snapshot into {}".format(file_path))
         if itr == 0:
             file_path = osp.join(cfg.model_dir, f'snapshot_{epoch}.pth')
+            torch.save(state, file_path)
+            self.logger.info("Write snapshot into {}".format(file_path))
+        else:
+            file_path = osp.join(cfg.model_dir, f'snapshot_{epoch}_{itr}.pth')
             torch.save(state, file_path)
             self.logger.info("Write snapshot into {}".format(file_path))
 
